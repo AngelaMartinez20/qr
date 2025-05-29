@@ -27,7 +27,7 @@
         alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
         // Enviar al backend PHP
-        fetch("registrar_asistencia.php", {
+        fetch("https://asistencia-backen.onrender.com/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
