@@ -19,11 +19,11 @@ $fecha = date("Y-m-d H:i:s", $timestamp / 1000);
 $ip = $_SERVER['REMOTE_ADDR'];
 
 // Conexión a PostgreSQL
-$dbhost = "localhost";
+$dbhost = "postgresql://asistencia_db_pgyx_user:9SiUDr6GYslbOpqeFL8F6EcCksoVIuyp@dpg-d0sc97s9c44c739on6o0-a/asistencia_db_pgyx";
 $dbport = "5432";
-$dbname = "asistencia_db";
-$dbuser = "angelamartinez";
-$dbpass = "";
+$dbname = "asistencia_db_pgyx";
+$dbuser = "asistencia_db_pgyx_user";
+$dbpass = "9SiUDr6GYslbOpqeFL8F6EcCksoVIuyp";
 
 $dsn = "pgsql:host=$dbhost;port=$dbport;dbname=$dbname";
 
