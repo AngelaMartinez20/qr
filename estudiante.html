@@ -26,6 +26,13 @@
 
         alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
+  const payload = {
+    claseId: data.claseId,
+    timestamp: data.timestamp
+  };
+  console.log("Datos a enviar:", JSON.stringify(payload));  // <--- Aquí el console.log
+
+
         // Enviar al backend PHP
         fetch("https://asistencia-backen.onrender.com/index.php", {
           method: "POST",
