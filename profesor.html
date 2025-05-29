@@ -1,0 +1,30 @@
+<!-- profesor.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar QR - Asistencia</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <h1>Clase: Matemáticas 101</h1>
+  <div id="qrcode"></div>
+
+  <script>
+    // Simulación del contenido del QR (puede ser cifrado o firmado más adelante)
+    const classInfo = {
+      claseId: 'MAT101',
+      timestamp: Date.now()
+    };
+
+    const qrContent = JSON.stringify(classInfo);
+
+    // Genera el QR
+    new QRCode(document.getElementById("qrcode"), {
+      text: qrContent,
+      width: 256,
+      height: 256
+    });
+  </script>
+</body>
+</html>
