@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escanear QR - Asistencia</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <h1>Escanear código QR</h1>
+  <div id="reader" style="width:300px;"></div>
+  <audio id="beep" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
+  <script>
+    const SECRET_KEY = 'asistencia1234567';
+
+    function onScanSuccess(encryptedText) {
+      console.log("Código escaneado:", encryptedText);
+
+      navigator.vibrate?.(200);
+      document.getElementById('beep').play();
+
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const data = JSON.parse(decrypted);
+
+        alert("¡Asistencia registrada para clase: " + data.claseId + "!");
+
+        // Enviar al backend PHP
+        fetch("registrar_asistencia.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            claseId: data.claseId,
+            timestamp: data.timestamp
+          })
+        })
+        .then(res => res.json())
+        .then(response => {
+          alert(response.message);
+        })
+        .catch(err => {
+          console.error("Error al registrar:", err);
+          alert("Error al enviar los datos.");
+        });
+
+      } catch (e) {
+        alert("Código inválido o QR corrupto.");
+      }
+
+      html5QrCode.stop();
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+  </script>
+</body>
+</html>

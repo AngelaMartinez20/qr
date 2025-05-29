@@ -1,27 +1,28 @@
-<!-- profesor.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Generar QR - Asistencia</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
   <h1>Clase: Matemáticas 101</h1>
   <div id="qrcode"></div>
 
   <script>
-    // Simulación del contenido del QR (puede ser cifrado o firmado más adelante)
+    const SECRET_KEY = 'asistencia1234567';
+
     const classInfo = {
       claseId: 'MAT101',
       timestamp: Date.now()
     };
 
-    const qrContent = JSON.stringify(classInfo);
+    const jsonData = JSON.stringify(classInfo);
+    const encrypted = CryptoJS.AES.encrypt(jsonData, SECRET_KEY).toString();
 
-    // Genera el QR
     new QRCode(document.getElementById("qrcode"), {
-      text: qrContent,
+      text: encrypted,
       width: 256,
       height: 256
     });
