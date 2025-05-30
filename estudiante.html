@@ -9,7 +9,6 @@
 <body>
   <h1>Escanear código QR</h1>
   <div id="reader" style="width: 300px;"></div>
-  <!-- Audio funcional sin error 403 -->
   <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
   <script>
@@ -23,16 +22,12 @@
 
       try {
         const decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
-        if (!decrypted) {
-          throw new Error("El texto descifrado está vacío o inválido.");
-        }
-
+        if (!decrypted) throw new Error("El texto descifrado está vacío o inválido.");
+        
         const data = JSON.parse(decrypted);
         console.log("Datos descifrados:", data);
 
-        if (!data.claseId || !data.timestamp) {
-          throw new Error("Datos del QR incompletos.");
-        }
+        if (!data.claseId || !data.timestamp) throw new Error("Datos del QR incompletos.");
 
         alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
@@ -46,6 +41,7 @@
         })
         .then(res => {
           const contentType = res.headers.get("content-type") || "";
+          console.log("Tipo de contenido:", contentType);
           if (contentType.includes("application/json")) {
             return res.json();
           } else {
@@ -68,7 +64,6 @@
       }
     }
 
-    // Inicializar lector
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
