@@ -18,7 +18,11 @@
       console.log("Código escaneado:", encryptedText);
 
       navigator.vibrate?.(200);
-      document.getElementById('beep').play();
+      try {
+        document.getElementById('beep').play();
+      } catch (e) {
+        console.warn("No se pudo reproducir el sonido:", e);
+      }
 
       try {
         const decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
@@ -26,47 +30,44 @@
 
         alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
-  const payload = {
-    claseId: data.claseId,
-    timestamp: data.timestamp
-  };
-  console.log("Datos a enviar:", JSON.stringify(payload));  // <--- Aquí el console.log
+        const payload = {
+          claseId: data.claseId,
+          timestamp: data.timestamp
+        };
+        console.log("Datos a enviar:", JSON.stringify(payload));
 
+        // Enviar al backend
+        fetch("https://asistencia-backen.onrender.com/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+        .then(res => {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            return res.json();
+          } else {
+            throw new Error("Respuesta no es JSON");
+          }
+        })
+        .then(response => {
+          alert(response.message);
+        })
+        .catch(err => {
+          console.error("Error al registrar:", err);
+          alert("Error al enviar los datos.");
+        });
 
-  try {
-  document.getElementById('beep').play();
-} catch (e) {
-  console.warn("No se pudo reproducir el sonido:", e);
-}
+      } catch (err) {
+        console.error("Error al descifrar el QR:", err);
+        alert("Código QR inválido o mal formateado.");
+      }
+    }
 
-// Enviar al backend
-fetch("https://asistencia-backen.onrender.com/index.php", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    claseId: data.claseId,
-    timestamp: data.timestamp
-  })
-})
-.then(res => {
-  const contentType = res.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return res.json();
-  } else {
-    throw new Error("Respuesta no es JSON");
-  }
-})
-.then(response => {
-  alert(response.message);
-})
-.catch(err => {
-  console.error("Error al registrar:", err);
-  alert("Error al enviar los datos.");
-});
-
-
+    // Inicializar el lector QR
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
     html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
   </script>
 </body>
