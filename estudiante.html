@@ -9,38 +9,40 @@
 <body>
   <h1>Escanear código QR</h1>
   <div id="reader" style="width:300px;"></div>
-  <audio id="beep" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
+  <!-- Beep funcional desde GitHub sin restricciones -->
+  <audio id="beep" src="https://raw.githubusercontent.com/free-sounds/beeps/main/beep.mp3"></audio>
 
   <script>
     const SECRET_KEY = 'asistencia1234567';
 
     function onScanSuccess(encryptedText) {
       console.log("Código escaneado:", encryptedText);
-
-      navigator.vibrate?.(200);
+      
+      // Intentar desencriptar
+      let decrypted;
       try {
-        document.getElementById('beep').play();
-      } catch (e) {
-        console.warn("No se pudo reproducir el sonido:", e);
-      }
-
-      try {
-        const decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw new Error("No se pudo desencriptar");
         const data = JSON.parse(decrypted);
 
-        alert("¡Asistencia registrada para clase: " + data.claseId + "!");
+        // Vibración y sonido
+        if (navigator.vibrate) navigator.vibrate(200);
+        document.getElementById('beep').play().catch(e => {
+          console.warn("No se pudo reproducir el sonido:", e);
+        });
 
-        const payload = {
-          claseId: data.claseId,
-          timestamp: data.timestamp
-        };
-        console.log("Datos a enviar:", JSON.stringify(payload));
+        // Mostrar alerta
+        alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
         // Enviar al backend
         fetch("https://asistencia-backen.onrender.com/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            claseId: data.claseId,
+            timestamp: data.timestamp
+          })
         })
         .then(res => {
           const contentType = res.headers.get("content-type");
@@ -51,7 +53,7 @@
           }
         })
         .then(response => {
-          alert(response.message);
+          alert(response.message || "Asistencia registrada con éxito.");
         })
         .catch(err => {
           console.error("Error al registrar:", err);
@@ -59,16 +61,30 @@
         });
 
       } catch (err) {
-        console.error("Error al descifrar el QR:", err);
-        alert("Código QR inválido o mal formateado.");
+        console.error("Error al procesar el QR:", err);
+        alert("El código QR no es válido o no se pudo descifrar.");
       }
     }
 
-    // Inicializar el lector QR
+    // Iniciar escáner al cargar
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        const cameraId = cameras[0].id;
+        html5QrCode.start(
+          { facingMode: "environment" }, // O usa cameraId para una específica
+          config,
+          onScanSuccess
+        );
+      } else {
+        alert("No se encontraron cámaras.");
+      }
+    }).catch(err => {
+      console.error("No se pudo acceder a la cámara:", err);
+      alert("Permiso de cámara denegado o no disponible.");
+    });
   </script>
 </body>
 </html>
