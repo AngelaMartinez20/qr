@@ -33,7 +33,14 @@
   console.log("Datos a enviar:", JSON.stringify(payload));  // <--- Aquí el console.log
 
 
-  fetch("https://asistencia-backen.onrender.com/index.php", {
+  try {
+  document.getElementById('beep').play();
+} catch (e) {
+  console.warn("No se pudo reproducir el sonido:", e);
+}
+
+// Enviar al backend
+fetch("https://asistencia-backen.onrender.com/index.php", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -41,17 +48,16 @@
     timestamp: data.timestamp
   })
 })
-.then(async res => {
-  const text = await res.text();
-  console.log("Respuesta cruda del servidor:", text);
-
-  try {
-    const json = JSON.parse(text);
-    alert(json.message);
-  } catch (e) {
-    console.error("La respuesta no es JSON válido:", e);
-    alert("Error al interpretar la respuesta del servidor.");
+.then(res => {
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return res.json();
+  } else {
+    throw new Error("Respuesta no es JSON");
   }
+})
+.then(response => {
+  alert(response.message);
 })
 .catch(err => {
   console.error("Error al registrar:", err);
