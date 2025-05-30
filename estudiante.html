@@ -16,7 +16,6 @@
 
     function onScanSuccess(encryptedText) {
       console.log("Código escaneado:", encryptedText);
-
       navigator.vibrate?.(200);
       document.getElementById('beep').play().catch(e => console.warn("Sonido bloqueado:", e));
 
@@ -29,8 +28,6 @@
 
         if (!data.claseId || !data.timestamp) throw new Error("Datos del QR incompletos.");
 
-        alert("¡Asistencia registrada para clase: " + data.claseId + "!");
-
         fetch("https://asistencia-backen.onrender.com/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -41,21 +38,26 @@
         })
         .then(res => {
           const contentType = res.headers.get("content-type") || "";
-          console.log("Tipo de contenido:", contentType);
-          if (contentType.includes("application/json")) {
-            return res.json();
-          } else {
-            return res.text().then(text => {
-              throw new Error("Respuesta no es JSON: " + text);
-            });
-          }
+          console.log("Content-Type:", contentType);
+          console.log("Status:", res.status);
+
+          return res.text().then(text => {
+            console.log("Texto crudo recibido:", text);
+
+            try {
+              const json = JSON.parse(text);
+              return json;
+            } catch (e) {
+              throw new Error("Respuesta no es JSON válido: " + text);
+            }
+          });
         })
         .then(response => {
           alert(response.message);
         })
         .catch(err => {
           console.error("Error al registrar:", err);
-          alert("Error al enviar los datos.");
+          alert("Error al enviar los datos: " + err.message);
         });
 
       } catch (err) {
@@ -66,10 +68,11 @@
 
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
     html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
       .catch(err => {
         console.error("Error iniciando escáner:", err);
-        alert("No se pudo iniciar la cámara.");
+        alert("No se pudo iniciar el escáner.");
       });
   </script>
 </body>
