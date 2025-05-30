@@ -5,16 +5,38 @@
   <title>Generar QR - Asistencia</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+    }
+    #qrcode {
+      margin-bottom: 2rem;
+    }
+    ul {
+      padding-left: 1rem;
+    }
+    li {
+      margin: 0.5rem 0;
+    }
+  </style>
 </head>
 <body>
   <h1>Clase: Matemáticas 101</h1>
+
+  <h2>🔐 Código QR para asistencia</h2>
   <div id="qrcode"></div>
+
+  <h2>📋 Lista de asistencia</h2>
+  <ul id="lista-asistencias">Cargando...</ul>
 
   <script>
     const SECRET_KEY = 'asistencia1234567';
+    const claseId = 'MAT101';
 
+    // 1. Generar y mostrar QR cifrado
     const classInfo = {
-      claseId: 'MAT101',
+      claseId,
       timestamp: Date.now()
     };
 
@@ -26,6 +48,29 @@
       width: 256,
       height: 256
     });
+
+    // 2. Obtener y mostrar lista de asistencia
+    fetch("https://asistencia-backen.onrender.com/index.php?claseId=" + encodeURIComponent(claseId))
+      .then(res => res.json())
+      .then(data => {
+        const lista = document.getElementById("lista-asistencias");
+        lista.innerHTML = "";
+
+        if (!data.asistencias || data.asistencias.length === 0) {
+          lista.innerHTML = "<li>No hay asistencias registradas aún.</li>";
+          return;
+        }
+
+        data.asistencias.forEach(a => {
+          const item = document.createElement("li");
+          item.textContent = `🕒 ${a.fecha} - 🌐 ${a.ip_estudiante}`;
+          lista.appendChild(item);
+        });
+      })
+      .catch(err => {
+        document.getElementById("lista-asistencias").textContent = "Error al obtener asistencias.";
+        console.error(err);
+      });
   </script>
 </body>
 </html>
