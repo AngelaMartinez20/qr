@@ -8,34 +8,34 @@
 </head>
 <body>
   <h1>Escanear código QR</h1>
-  <div id="reader" style="width:300px;"></div>
-
-  <!-- Beep funcional desde GitHub sin restricciones -->
-  <audio id="beep" src="https://raw.githubusercontent.com/free-sounds/beeps/main/beep.mp3"></audio>
+  <div id="reader" style="width: 300px;"></div>
+  <!-- Audio funcional sin error 403 -->
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
   <script>
     const SECRET_KEY = 'asistencia1234567';
 
     function onScanSuccess(encryptedText) {
       console.log("Código escaneado:", encryptedText);
-      
-      // Intentar desencriptar
-      let decrypted;
+
+      navigator.vibrate?.(200);
+      document.getElementById('beep').play().catch(e => console.warn("Sonido bloqueado:", e));
+
       try {
-        decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
-        if (!decrypted) throw new Error("No se pudo desencriptar");
+        const decrypted = CryptoJS.AES.decrypt(encryptedText, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) {
+          throw new Error("El texto descifrado está vacío o inválido.");
+        }
+
         const data = JSON.parse(decrypted);
+        console.log("Datos descifrados:", data);
 
-        // Vibración y sonido
-        if (navigator.vibrate) navigator.vibrate(200);
-        document.getElementById('beep').play().catch(e => {
-          console.warn("No se pudo reproducir el sonido:", e);
-        });
+        if (!data.claseId || !data.timestamp) {
+          throw new Error("Datos del QR incompletos.");
+        }
 
-        // Mostrar alerta
         alert("¡Asistencia registrada para clase: " + data.claseId + "!");
 
-        // Enviar al backend
         fetch("https://asistencia-backen.onrender.com/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -45,15 +45,17 @@
           })
         })
         .then(res => {
-          const contentType = res.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
             return res.json();
           } else {
-            throw new Error("Respuesta no es JSON");
+            return res.text().then(text => {
+              throw new Error("Respuesta no es JSON: " + text);
+            });
           }
         })
         .then(response => {
-          alert(response.message || "Asistencia registrada con éxito.");
+          alert(response.message);
         })
         .catch(err => {
           console.error("Error al registrar:", err);
@@ -61,30 +63,19 @@
         });
 
       } catch (err) {
-        console.error("Error al procesar el QR:", err);
-        alert("El código QR no es válido o no se pudo descifrar.");
+        console.error("Error procesando QR:", err);
+        alert("El código QR no es válido.");
       }
     }
 
-    // Iniciar escáner al cargar
+    // Inicializar lector
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        const cameraId = cameras[0].id;
-        html5QrCode.start(
-          { facingMode: "environment" }, // O usa cameraId para una específica
-          config,
-          onScanSuccess
-        );
-      } else {
-        alert("No se encontraron cámaras.");
-      }
-    }).catch(err => {
-      console.error("No se pudo acceder a la cámara:", err);
-      alert("Permiso de cámara denegado o no disponible.");
-    });
+    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+      .catch(err => {
+        console.error("Error iniciando escáner:", err);
+        alert("No se pudo iniciar la cámara.");
+      });
   </script>
 </body>
 </html>
