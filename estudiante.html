@@ -33,30 +33,31 @@
   console.log("Datos a enviar:", JSON.stringify(payload));  // <--- Aquí el console.log
 
 
-        // Enviar al backend PHP
-        fetch("https://asistencia-backen.onrender.com/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            claseId: data.claseId,
-            timestamp: data.timestamp
-          })
-        })
-        .then(res => res.json())
-        .then(response => {
-          alert(response.message);
-        })
-        .catch(err => {
-          console.error("Error al registrar:", err);
-          alert("Error al enviar los datos.");
-        });
+  fetch("https://asistencia-backen.onrender.com/index.php", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    claseId: data.claseId,
+    timestamp: data.timestamp
+  })
+})
+.then(async res => {
+  const text = await res.text();
+  console.log("Respuesta cruda del servidor:", text);
 
-      } catch (e) {
-        alert("Código inválido o QR corrupto.");
-      }
+  try {
+    const json = JSON.parse(text);
+    alert(json.message);
+  } catch (e) {
+    console.error("La respuesta no es JSON válido:", e);
+    alert("Error al interpretar la respuesta del servidor.");
+  }
+})
+.catch(err => {
+  console.error("Error al registrar:", err);
+  alert("Error al enviar los datos.");
+});
 
-      html5QrCode.stop();
-    }
 
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
